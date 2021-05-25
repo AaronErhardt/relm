@@ -38,14 +38,13 @@
 //! More info can be found in the [readme](https://github.com/antoyo/relm#relm).
 
 #![allow(clippy::new_without_default)]
-
 #![warn(
     missing_docs,
     trivial_casts,
     trivial_numeric_casts,
     unused_extern_crates,
     unused_import_braces,
-    unused_qualifications,
+    unused_qualifications
 )]
 
 /*
@@ -96,9 +95,9 @@
  */
 
 mod component;
-mod container;
+//mod container;
 mod core;
-mod drawing;
+//mod drawing;
 mod macros;
 mod state;
 mod widget;
@@ -107,56 +106,46 @@ mod widget;
 pub use fragile::Fragile;
 
 #[doc(hidden)]
-pub use glib::{
-    Cast,
-    IsA,
-    Object,
-    StaticType,
-    ToValue,
-    Value,
-};
-#[doc(hidden)]
-pub use glib::translate::{FromGlibPtrNone, ToGlib, ToGlibPtr};
-#[doc(hidden)]
-pub use gobject_sys::{GParameter, g_object_newv};
+pub use glib::translate::{FromGlibPtrNone, IntoGlib, ToGlibPtr};
 use glib::Continue;
+#[doc(hidden)]
+pub use glib::{Cast, IsA, Object, StaticType, ToValue, Value};
+#[doc(hidden)]
+pub use gobject_sys::{g_object_newv, GParameter};
 
 pub use crate::core::{Channel, EventStream, Sender, StreamHandle};
-pub use crate::state::{
-    DisplayVariant,
-    IntoOption,
-    IntoPair,
-    Relm,
-    Update,
-    UpdateNew,
-    execute,
-};
+pub use crate::state::{execute, DisplayVariant, IntoOption, IntoPair, Relm, Update, UpdateNew};
 use state::init_component;
 
 pub use component::Component;
-pub use container::{Container, ContainerComponent, ContainerWidget};
-pub use drawing::DrawHandler;
+//pub use container::{Container, ContainerComponent, ContainerWidget};
+//pub use drawing::DrawHandler;
 pub use widget::{Widget, WidgetTest};
 
+use std::time::Duration;
+
 /// Dummy macro to be used with `#[derive(Widget)]`.
-#[macro_export]
-macro_rules! impl_widget {
-    ($($tt:tt)*) => {
-        ()
-    };
-}
+//#[macro_export]
+//macro_rules! impl_widget {
+//    ($($tt:tt)*) => {
+//        ()
+//    };
+//}
 
-#[doc(hidden)]
-#[macro_export]
-macro_rules! use_impl_self_type {
-    (impl $(::relm::)*Widget for $self_type:ident { $($tts:tt)* }) => {
-        pub use self::__relm_gen_private::$self_type;
-    };
-}
+//#[doc(hidden)]
+//#[macro_export]
+//macro_rules! use_impl_self_type {
+//    (impl $(::relm::)*Widget for $self_type:ident { $($tts:tt)* }) => {
+//        pub use self::__relm_gen_private::$self_type;
+//    };
+//}
 
-fn create_widget_test<WIDGET>(model_param: WIDGET::ModelParam) -> (Component<WIDGET>, WIDGET::Streams, WIDGET::Widgets)
-    where WIDGET: Widget + WidgetTest + 'static,
-          WIDGET::Msg: DisplayVariant + 'static,
+fn create_widget_test<WIDGET>(
+    model_param: WIDGET::ModelParam,
+) -> (Component<WIDGET>, WIDGET::Streams, WIDGET::Widgets)
+where
+    WIDGET: Widget + WidgetTest + 'static,
+    WIDGET::Msg: DisplayVariant + 'static,
 {
     let (component, widget, relm) = create_widget::<WIDGET>(model_param);
     let widgets = widget.get_widgets();
@@ -167,10 +156,10 @@ fn create_widget_test<WIDGET>(model_param: WIDGET::ModelParam) -> (Component<WID
 
 /// Create a new relm widget without adding it to an existing widget.
 /// This is useful when a relm widget is at the root of another relm widget.
-pub fn create_component<CHILDWIDGET>(model_param: CHILDWIDGET::ModelParam)
-        -> Component<CHILDWIDGET>
-    where CHILDWIDGET: Widget + 'static,
-          CHILDWIDGET::Msg: DisplayVariant + 'static,
+pub fn create_component<CHILDWIDGET>(model_param: CHILDWIDGET::ModelParam) -> Component<CHILDWIDGET>
+where
+    CHILDWIDGET: Widget + 'static,
+    CHILDWIDGET::Msg: DisplayVariant + 'static,
 {
     let (component, widget, child_relm) = create_widget::<CHILDWIDGET>(model_param);
     init_component::<CHILDWIDGET>(component.owned_stream(), widget, &child_relm);
@@ -179,7 +168,7 @@ pub fn create_component<CHILDWIDGET>(model_param: CHILDWIDGET::ModelParam)
 
 /// Create a new relm container widget without adding it to an existing widget.
 /// This is useful when a relm widget is at the root of another relm widget.
-pub fn create_container<CHILDWIDGET>(model_param: CHILDWIDGET::ModelParam)
+/*pub fn create_container<CHILDWIDGET>(model_param: CHILDWIDGET::ModelParam)
         -> ContainerComponent<CHILDWIDGET>
     where CHILDWIDGET: Container + Widget + 'static,
           CHILDWIDGET::Msg: DisplayVariant + 'static,
@@ -189,13 +178,15 @@ pub fn create_container<CHILDWIDGET>(model_param: CHILDWIDGET::ModelParam)
     let containers = widget.other_containers();
     init_component::<CHILDWIDGET>(component.owned_stream(), widget, &child_relm);
     ContainerComponent::new(component, container, containers)
-}
+}*/
 
 /// Create a new relm widget with `model_param` as initialization value.
-fn create_widget<WIDGET>(model_param: WIDGET::ModelParam)
-    -> (Component<WIDGET>, WIDGET, Relm<WIDGET>)
-    where WIDGET: Widget + 'static,
-          WIDGET::Msg: DisplayVariant + 'static,
+fn create_widget<WIDGET>(
+    model_param: WIDGET::ModelParam,
+) -> (Component<WIDGET>, WIDGET, Relm<WIDGET>)
+where
+    WIDGET: Widget + 'static,
+    WIDGET::Msg: DisplayVariant + 'static,
 {
     let stream = EventStream::new();
 
@@ -208,7 +199,11 @@ fn create_widget<WIDGET>(model_param: WIDGET::ModelParam)
     (Component::new(stream, root), widget, relm)
 }
 
-type InitTestComponents<WIDGET> = (Component<WIDGET>, <WIDGET as WidgetTest>::Streams, <WIDGET as WidgetTest>::Widgets);
+type InitTestComponents<WIDGET> = (
+    Component<WIDGET>,
+    <WIDGET as WidgetTest>::Streams,
+    <WIDGET as WidgetTest>::Widgets,
+);
 
 /// Initialize a widget for a test.
 ///
@@ -267,10 +262,12 @@ type InitTestComponents<WIDGET> = (Component<WIDGET>, <WIDGET as WidgetTest>::St
 /// let (component, _, widgets) = relm::init_test::<Win>(()).expect("init_test failed");
 /// # }
 /// ```
-pub fn init_test<WIDGET>(model_param: WIDGET::ModelParam) ->
-    Result<InitTestComponents<WIDGET>, glib::BoolError>
-    where WIDGET: Widget + WidgetTest + 'static,
-          WIDGET::Msg: DisplayVariant + 'static,
+pub fn init_test<WIDGET>(
+    model_param: WIDGET::ModelParam,
+) -> Result<InitTestComponents<WIDGET>, glib::BoolError>
+where
+    WIDGET: Widget + WidgetTest + 'static,
+    WIDGET::Msg: DisplayVariant + 'static,
 {
     gtk::init()?;
     let component = create_widget_test::<WIDGET>(model_param);
@@ -279,8 +276,9 @@ pub fn init_test<WIDGET>(model_param: WIDGET::ModelParam) ->
 
 /// Initialize a widget.
 pub fn init<WIDGET>(model_param: WIDGET::ModelParam) -> Result<Component<WIDGET>, glib::BoolError>
-    where WIDGET: Widget + 'static,
-          WIDGET::Msg: DisplayVariant + 'static
+where
+    WIDGET: Widget + 'static,
+    WIDGET::Msg: DisplayVariant + 'static,
 {
     let (component, widget, relm) = create_widget::<WIDGET>(model_param);
     init_component::<WIDGET>(component.owned_stream(), widget, &relm);
@@ -337,16 +335,21 @@ pub fn init<WIDGET>(model_param: WIDGET::ModelParam) -> Result<Component<WIDGET>
 /// # }
 /// ```
 pub fn run<WIDGET>(model_param: WIDGET::ModelParam) -> Result<(), glib::BoolError>
-    where WIDGET: Widget + 'static,
+where
+    WIDGET: Widget + 'static,
 {
     gtk::init()?;
     let _component = init::<WIDGET>(model_param)?;
-    gtk::main();
+    //gtk::main();
     Ok(())
 }
 
 /// Emit the `msg` every `duration` ms.
-pub fn interval<F: Fn() -> MSG + 'static, MSG: 'static>(stream: &StreamHandle<MSG>, duration: u32, constructor: F) {
+pub fn interval<F: Fn() -> MSG + 'static, MSG: 'static>(
+    stream: &StreamHandle<MSG>,
+    duration: Duration,
+    constructor: F,
+) {
     let stream = stream.clone();
     glib::timeout_add_local(duration, move || {
         let msg = constructor();
@@ -356,7 +359,11 @@ pub fn interval<F: Fn() -> MSG + 'static, MSG: 'static>(stream: &StreamHandle<MS
 }
 
 /// After `duration` ms, emit `msg`.
-pub fn timeout<F: Fn() -> MSG + 'static, MSG: 'static>(stream: &StreamHandle<MSG>, duration: u32, constructor: F) {
+pub fn timeout<F: Fn() -> MSG + 'static, MSG: 'static>(
+    stream: &StreamHandle<MSG>,
+    duration: Duration,
+    constructor: F,
+) {
     let stream = stream.clone();
     glib::timeout_add_local(duration, move || {
         let msg = constructor();

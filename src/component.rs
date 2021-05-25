@@ -19,11 +19,7 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-use super::{
-    EventStream,
-    StreamHandle,
-    Widget,
-};
+use super::{EventStream, StreamHandle, Widget};
 
 /// Widget that was added by the `ContainerWidget::add_widget()` method.
 ///
@@ -42,10 +38,7 @@ pub struct Component<WIDGET: Widget> {
 impl<WIDGET: Widget> Component<WIDGET> {
     #[doc(hidden)]
     pub fn new(stream: EventStream<WIDGET::Msg>, widget: WIDGET::Root) -> Self {
-        Component {
-            stream,
-            widget,
-        }
+        Component { stream, widget }
     }
 
     /// Emit a message of the widget stream.

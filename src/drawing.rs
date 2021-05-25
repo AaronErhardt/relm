@@ -16,7 +16,7 @@ use cairo::{
 };
 use gtk::{
     Inhibit,
-    WidgetExt,
+    prelude::WidgetExt,
 };
 
 #[derive(Clone)]
@@ -50,7 +50,7 @@ pub struct DrawContext<W: WidgetExt> {
 impl<W: Clone + WidgetExt> DrawContext<W> {
     fn new(draw_surface: &Surface, edit_surface: &ImageSurface, widget: &W) -> Self {
         Self {
-            context: Context::new(&edit_surface),
+            context: Context::new(&edit_surface).expect("Couldn't create new cairo Context"),
             draw_surface: draw_surface.clone(),
             edit_surface: edit_surface.clone(),
             widget: widget.clone(),
@@ -93,15 +93,15 @@ impl<W: Clone + WidgetExt> DrawHandler<W> {
     /// Get the drawing context to draw on a widget.
     pub fn get_context(&mut self) -> DrawContext<W> {
         if let Some(ref widget) = self.widget {
-            let allocation = widget.get_allocation();
+            let allocation = widget.allocation();
             let scale = if cfg!(feature = "hidpi") {
-                widget.get_scale_factor()
+                widget.scale_factor()
             } else {
                 1
             };
             let width = allocation.width * scale;
             let height = allocation.height * scale;
-            if (width, height) != (self.edit_surface.get_width(), self.edit_surface.get_height()) {
+            if (width, height) != (self.edit_surface.width(), self.edit_surface.height()) {
                 // TODO: also copy the old small surface to the new bigger one?
                 match ImageSurface::create(Format::ARgb32, width, height) {
                     Ok(surface) => {
@@ -124,7 +124,7 @@ impl<W: Clone + WidgetExt> DrawHandler<W> {
     /// Initialize the draw handler.
     /// The widget is the one on which drawing will occur.
     pub fn init(&mut self, widget: &W) {
-        widget.set_app_paintable(true);
+        //widget.set_app_paintable(true);
         self.widget = Some(widget.clone());
         let draw_surface = self.draw_surface.clone();
         widget.connect_draw(move |_, context| {

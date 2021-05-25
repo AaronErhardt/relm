@@ -27,9 +27,7 @@
     trivial_casts,
     trivial_numeric_casts,
     unused_extern_crates,
-    unused_import_braces,
     unused_qualifications,
-    unused_results,
 )]
 
 mod into;
@@ -73,8 +71,9 @@ impl<UPDATE: Update> Relm<UPDATE> {
 /// A component has a model (data) associated with it and can mutate it when it receives a message
 /// (in the `update()` method).
 pub trait Update
-    where Self: Sized,
-          Self::Msg: DisplayVariant,
+where
+    Self: Sized,
+    Self::Msg: DisplayVariant,
 {
     /// The type of the model.
     type Model;
@@ -88,8 +87,7 @@ pub trait Update
 
     /// Connect the subscriptions.
     /// Subscriptions are `Future`/`Stream` that are spawn when the object is created.
-    fn subscriptions(&mut self, _relm: &Relm<Self>) {
-    }
+    fn subscriptions(&mut self, _relm: &Relm<Self>) {}
 
     /// Method called when a message is received from an event.
     fn update(&mut self, event: Self::Msg);
@@ -122,7 +120,8 @@ impl DisplayVariant for () {
 /// Create a bare component, i.e. a component only implementing the Update trait, not the Widget
 /// trait.
 pub fn execute<UPDATE>(model_param: UPDATE::ModelParam) -> EventStream<UPDATE::Msg>
-where UPDATE: Update + UpdateNew + 'static
+where
+    UPDATE: Update + UpdateNew + 'static,
 {
     let stream = EventStream::new();
 
@@ -136,9 +135,13 @@ where UPDATE: Update + UpdateNew + 'static
 
 /// Initialize a component by creating its subscriptions and dispatching the messages from the
 /// stream.
-pub fn init_component<UPDATE>(stream: &EventStream<UPDATE::Msg>, mut component: UPDATE, relm: &Relm<UPDATE>)
-    where UPDATE: Update + 'static,
-          UPDATE::Msg: DisplayVariant + 'static,
+pub fn init_component<UPDATE>(
+    stream: &EventStream<UPDATE::Msg>,
+    mut component: UPDATE,
+    relm: &Relm<UPDATE>,
+) where
+    UPDATE: Update + 'static,
+    UPDATE::Msg: DisplayVariant + 'static,
 {
     component.subscriptions(relm);
     stream.set_callback(move |event| {
@@ -147,27 +150,29 @@ pub fn init_component<UPDATE>(stream: &EventStream<UPDATE::Msg>, mut component: 
 }
 
 fn update_component<COMPONENT>(component: &mut COMPONENT, event: COMPONENT::Msg)
-    where COMPONENT: Update,
+where
+    COMPONENT: Update,
 {
     if cfg!(debug_assertions) {
         let time = SystemTime::now();
         let debug = event.display_variant();
-        let debug =
-            if debug.len() > 100 {
-                format!("{}…", &debug[..100])
-            }
-            else {
-                debug.to_string()
-            };
+        let debug = if debug.len() > 100 {
+            format!("{}…", &debug[..100])
+        } else {
+            debug.to_string()
+        };
         component.update(event);
         if let Ok(duration) = time.elapsed() {
             let ms = duration.subsec_nanos() as u64 / 1_000_000 + duration.as_secs() * 1000;
             if ms >= 16 {
-                log::warn!("The update function was slow to execute for message {}: {}ms", debug, ms);
+                log::warn!(
+                    "The update function was slow to execute for message {}: {}ms",
+                    debug,
+                    ms
+                );
             }
         }
-    }
-    else {
+    } else {
         component.update(event)
     }
 }

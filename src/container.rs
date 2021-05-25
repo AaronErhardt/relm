@@ -20,7 +20,7 @@
  */
 
 use glib::{Cast, IsA, Object};
-use gtk::{ContainerExt, WidgetExt};
+use gtk::prelude::WidgetExt;
 
 use crate::state::EventStream;
 use super::{Component, DisplayVariant, StreamHandle, create_widget, init_component};
@@ -54,7 +54,7 @@ impl<WIDGET: Container + Widget> ContainerComponent<WIDGET> {
     pub fn add_widget<CHILDWIDGET>(&self, model_param: CHILDWIDGET::ModelParam)
         -> Component<CHILDWIDGET>
         where CHILDWIDGET: Widget + 'static,
-              WIDGET::Container: ContainerExt + IsA<gtk::Widget> + IsA<Object>,
+              WIDGET::Container: IsA<gtk::Widget> + IsA<Object>,
     {
         let (component, widget, child_relm) = create_widget::<CHILDWIDGET>(model_param);
         let container = WIDGET::add_widget(self, &component);
@@ -146,7 +146,7 @@ pub trait ContainerWidget {
               CHILDWIDGET::Root: IsA<gtk::Widget>;
 }
 
-impl<W: Clone + ContainerExt + IsA<gtk::Widget> + IsA<Object>> ContainerWidget for W {
+impl<W: Clone + IsA<gtk::Widget> + IsA<Object>> ContainerWidget for W {
     fn add_container<CHILDWIDGET>(&self, model_param: CHILDWIDGET::ModelParam)
             -> ContainerComponent<CHILDWIDGET>
         where CHILDWIDGET: Container + Widget + 'static,
